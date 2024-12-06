@@ -97,7 +97,8 @@ pub fn check_enum_and_return_options(e: syn::ItemEnum) -> AssetEnumOptions {
 }
 
 pub fn get_files(base_path: syn::LitStr, variant_paths: std::vec::Vec<syn::LitStr>) -> std::vec::Vec<std::vec::Vec<u8>> {
-    let base = std::path::PathBuf::from(base_path.value());
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    let base = std::path::Path::new(&manifest_dir).join(base_path.value());
     let mut data = vec![];
     for var_path in variant_paths {
         let name = base.join(var_path.value());

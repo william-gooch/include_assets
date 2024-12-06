@@ -5,14 +5,17 @@ pub(crate) mod parse;
 
 use include_assets_decode::codec::Codec;
 use std::borrow::Borrow as _;
+use std::path::Path;
 
 #[proc_macro]
 pub fn include_dir(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    std::env::set_current_dir(manifest_dir).unwrap();
+    // std::env::set_current_dir(manifest_dir).unwrap();
 
     let args = syn::parse_macro_input!(tokens as parse::IncludeDirArgs);
     let opts = parse::kv_args_to_hashmap(args.opts.into_iter(), ["compression", "level", "links"].into_iter().collect());
+
+    let path = Path::new(&manifest_dir).join(&args.path.value());
 
     //println!("current directory: {}", std::env::current_dir().unwrap().display());
     //println!("path: {}", args.path.value());
@@ -29,7 +32,7 @@ pub fn include_dir(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
         checksums,
     } = named::prepare_named_archive(
         codec.borrow() as &dyn Codec<CompressionError = common::MyError, DecompressionError = common::MyError>,
-        named::read_dir(args.path.value(), symlink_rules).unwrap(),
+        named::read_dir(path, symlink_rules).unwrap(),
     )
     .unwrap();
 
@@ -54,8 +57,6 @@ pub fn include_dir(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 #[proc_macro_derive(AssetEnum, attributes(archive, asset))]
 pub fn derive_asset_enum(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    std::env::set_current_dir(manifest_dir).unwrap();
 
     let e = syn::parse_macro_input!(tokens as syn::ItemEnum);
 
